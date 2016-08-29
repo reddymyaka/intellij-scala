@@ -16,6 +16,10 @@
         <component>
             <implementation-class>org.jetbrains.sbt.resolvers.SbtResolversManager</implementation-class>
         </component>
+        <component>
+            <implementation-class>org.jetbrains.sbt.console.SbtConsoleComponent</implementation-class>
+            <loadForDefaultProject/>
+        </component>
     </project-components>
 
     <application-components>

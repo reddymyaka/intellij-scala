@@ -13,13 +13,13 @@ object ProcessRunner {
 }
 
 class ProcessRunner(val workingDir: File, val command: String*) {
-  builder = new ProcessBuilder(command: _*)
+  final private val outputMulticast: MulticastPipe = new MulticastPipe
+  final private val builder: ProcessBuilder = new ProcessBuilder(command: _*)
   builder.directory(workingDir)
   builder.redirectErrorStream(true)
-  final private var builder: ProcessBuilder = null
+
   private var process: Process = null
   private var shutdownHook: Thread = null
-  final private val outputMulticast: MulticastPipe = new MulticastPipe
   private var input: Writer = null
 
   def subscribeToOutput: OutputReader = new OutputReader(outputMulticast.subscribe)

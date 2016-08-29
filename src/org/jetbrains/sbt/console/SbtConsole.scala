@@ -25,7 +25,7 @@ import com.intellij.ui.content.{Content, ContentFactory}
 object SbtConsole {
   // org.jetbrains.idea.maven.embedder.MavenConsoleImpl
   private val logger: Logger = Logger.getInstance(classOf[SbtConsole].getName)
-  private val CONSOLE_KEY = Key.create("SBT_CONSOLE_KEY")
+  private val CONSOLE_KEY: Key[SbtConsole] = Key.create("SBT_CONSOLE_KEY")
   val CONSOLE_FILTER_REGEXP: String = "\\s" + RegexpFilter.FILE_PATH_MACROS + ":" + RegexpFilter.LINE_MACROS + ":\\s"
 
   private def createConsoleView(project: Project): ConsoleView  = {
@@ -53,10 +53,10 @@ object SbtConsole {
   }
 }
 
-class SbtConsole(val title: String, val project: Project, val runnerComponent: SbtRunnerComponent) {
-  this.consoleView = SbtConsole.createConsoleView(project)
-  final private var consoleView: ConsoleView = null
-  final private val isOpen: AtomicBoolean = new AtomicBoolean(false)
+//noinspection NameBooleanParameters
+class SbtConsole(val title: String, val project: Project, val runnerComponent: SbtConsoleComponent) {
+  private val consoleView: ConsoleView = SbtConsole.createConsoleView(project)
+  private val isOpen: AtomicBoolean = new AtomicBoolean(false)
   private var finished: Boolean = false
 
   def isFinished: Boolean = finished
@@ -65,7 +65,7 @@ class SbtConsole(val title: String, val project: Project, val runnerComponent: S
     finished = true
   }
 
-  def attachToProcess(processHandler: ProcessHandler, runnerComponent: SbtRunnerComponent) {
+  def attachToProcess(processHandler: ProcessHandler, runnerComponent: SbtConsoleComponent) {
     consoleView.print(runnerComponent.getFormattedCommand + "\n\n", ConsoleViewContentType.SYSTEM_OUTPUT)
     consoleView.attachToProcess(processHandler)
     processHandler.addProcessListener(new ProcessAdapter {
@@ -100,7 +100,7 @@ class SbtConsole(val title: String, val project: Project, val runnerComponent: S
     val toolWindowPanel = new SimpleToolWindowPanel(false, true)
     val consoleComponent: JComponent = consoleView.getComponent
     toolWindowPanel.setContent(consoleComponent)
-    val startSbtAction: SbtConsole#StartSbtAction = new SbtConsole#StartSbtAction
+    val startSbtAction: SbtConsole#StartSbtAction = new StartSbtAction
     toolWindowPanel.setToolbar(createToolbar(startSbtAction))
     startSbtAction.registerCustomShortcutSet(CommonShortcuts.getRerun, consoleComponent)
     val content = ContentFactory.SERVICE.getInstance.createContent(toolWindowPanel, title, true)
@@ -113,7 +113,7 @@ class SbtConsole(val title: String, val project: Project, val runnerComponent: S
   private def createToolbar(startSbtAction: AnAction): JComponent = {
     val toolbarPanel: JPanel = new JPanel(new GridLayout)
     val group = new DefaultActionGroup
-    val killSbtAction = new SbtConsole#KillSbtAction
+    val killSbtAction = new KillSbtAction
     group.add(startSbtAction)
     group.add(killSbtAction)
     // Adds "Next/Prev hyperlink", "Use Soft Wraps", and "Scroll to End"
@@ -138,7 +138,7 @@ class SbtConsole(val title: String, val project: Project, val runnerComponent: S
   }
 
   private class StartSbtAction() extends DumbAwareAction("Start SBT", "Start SBT", IconLoader.getIcon("/toolwindows/toolWindowRun.png")) {
-    def actionPerformed(event: Action) {
+    override def actionPerformed(event: AnActionEvent) {
       runnerComponent.startIfNotStartedSafe(false)
     }
 
@@ -148,7 +148,7 @@ class SbtConsole(val title: String, val project: Project, val runnerComponent: S
   }
 
   private class KillSbtAction() extends DumbAwareAction("Kill SBT", "Forcibly kill the SBT process", IconLoader.getIcon("/debugger/killProcess.png")) {
-    def actionPerformed(event: Action) {
+    override def actionPerformed(event: AnActionEvent) {
       runnerComponent.destroyProcess()
     }
 

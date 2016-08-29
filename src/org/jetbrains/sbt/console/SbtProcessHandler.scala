@@ -15,23 +15,25 @@ object SbtProcessHandler {
 
   private class NotifyWhenTextAvailable(val process: SbtProcessHandler, val output: Reader) extends Runnable {
     def run() {
-      try
+      try {
         val cbuf: Array[Char] = new Array[Char](100)
         var len: Int = 0
-        while ( {len = output.read(cbuf); len} != -1) {
+        while ( {
+          len = output.read(cbuf); len
+        } != -1) {
           val text: String = new String(cbuf, 0, len)
           val withoutCr: String = text.replace("\r", "")
           process.notifyTextAvailable(withoutCr, ProcessOutputTypes.STDOUT)
         }
 
-      catch {
+      } catch {
         case e: IOException =>
           logger.error(e)
       } finally process.notifyProcessTerminated(0)
     }
   }
 
-  private class ExecuteUserEnteredActions(val sbt: SbtRunnerComponent) extends OutputStream {
+  private class ExecuteUserEnteredActions(val sbt: SbtConsoleComponent) extends OutputStream {
     final private val commandBuffer: StringBuilder = new StringBuilder
 
     def write(b: Int) {
@@ -49,11 +51,11 @@ object SbtProcessHandler {
 
 }
 
-class SbtProcessHandler(val sbt: SbtRunnerComponent, val output: OutputReader) extends ProcessHandler {
+class SbtProcessHandler(val sbt: SbtConsoleComponent, val output: OutputReader) extends ProcessHandler {
   override def startNotify() {
     val outputNotifier: SbtProcessHandler.NotifyWhenTextAvailable = new SbtProcessHandler.NotifyWhenTextAvailable(this, output)
-    addProcessListener(new Nothing() {
-      def startNotified(event: Nothing) {
+    addProcessListener(new ProcessAdapter() {
+      override def startNotified(event: ProcessEvent) {
         val t: Thread = new Thread(outputNotifier)
         t.setDaemon(true)
         t.start()

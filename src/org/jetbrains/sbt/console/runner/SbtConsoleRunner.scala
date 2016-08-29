@@ -9,7 +9,7 @@ import java.util
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 
-object SbtRunner {
+object SbtConsoleRunner {
   private val PROMPT: String = "\n> "
   private val SCALA_PROMPT: String = "\nscala> "
   private val FAILED_TO_COMPILE_PROMPT: String = "Hit enter to retry or 'exit' to quit:"
@@ -30,13 +30,12 @@ object SbtRunner {
   }
 }
 
-class SbtRunner(val javaCommand: String, val workingDir: File, val launcherJar: File, val vmParameters: Array[String]) {
+class SbtConsoleRunner(val javaCommand: String, val workingDir: File, val launcherJar: File, val vmParameters: Array[String]) {
   if (!workingDir.isDirectory) throw new IllegalArgumentException("Working directory does not exist: " + workingDir)
   if (!launcherJar.isFile) throw new IllegalArgumentException("Launcher JAR file does not exist: " + launcherJar)
-  command = SbtRunner.getCommand(javaCommand, launcherJar, vmParameters)
-  sbt = new ProcessRunner(workingDir, command: _*)
-  final private var sbt: ProcessRunner = null
-  final private var command: Array[String] = null
+
+  final private val command: Array[String] = SbtConsoleRunner.getCommand(javaCommand, launcherJar, vmParameters)
+  final private val sbt: ProcessRunner = new ProcessRunner(workingDir, command: _*)
 
   final def getFormattedCommand: String = {
     val sb: StringBuilder = new StringBuilder
@@ -56,7 +55,7 @@ class SbtRunner(val javaCommand: String, val workingDir: File, val launcherJar: 
     val output: OutputReader = sbt.subscribeToOutput
     sbt.start()
     sbt.destroyOnShutdown()
-    if (wait) output.waitForOutput(util.Arrays.asList(SbtRunner.PROMPT, SbtRunner.FAILED_TO_COMPILE_PROMPT), util.Arrays.asList[String]())
+    if (wait) output.waitForOutput(util.Arrays.asList(SbtConsoleRunner.PROMPT, SbtConsoleRunner.FAILED_TO_COMPILE_PROMPT), util.Arrays.asList[String]())
     output.close()
   }
 
@@ -67,14 +66,14 @@ class SbtRunner(val javaCommand: String, val workingDir: File, val launcherJar: 
     sbt.start()
     sbt.destroyOnShutdown()
     if (wait) {
-      output.waitForOutput(util.Arrays.asList(SbtRunner.PROMPT, SbtRunner.FAILED_TO_COMPILE_PROMPT), util.Arrays.asList[String]())
+      output.waitForOutput(util.Arrays.asList(SbtConsoleRunner.PROMPT, SbtConsoleRunner.FAILED_TO_COMPILE_PROMPT), util.Arrays.asList[String]())
       output.close()
       onStarted.run()
     }
     else new Thread() {
       override def run() {
         try {
-          output.waitForOutput(util.Arrays.asList(SbtRunner.PROMPT, SbtRunner.FAILED_TO_COMPILE_PROMPT), util.Arrays.asList[String]())
+          output.waitForOutput(util.Arrays.asList(SbtConsoleRunner.PROMPT, SbtConsoleRunner.FAILED_TO_COMPILE_PROMPT), util.Arrays.asList[String]())
           output.close()
           onStarted.run()
         } catch {
@@ -100,10 +99,10 @@ class SbtRunner(val javaCommand: String, val workingDir: File, val launcherJar: 
     val output: OutputReader = sbt.subscribeToOutput
     try {
       sbt.writeInput(action + "\n")
-      output.waitForOutput(util.Arrays.asList(SbtRunner.PROMPT, SbtRunner.SCALA_PROMPT, SbtRunner.FAILED_TO_COMPILE_PROMPT), util.Arrays.asList(SbtRunner.PROMPT_AFTER_EMPTY_ACTION))
+      output.waitForOutput(util.Arrays.asList(SbtConsoleRunner.PROMPT, SbtConsoleRunner.SCALA_PROMPT, SbtConsoleRunner.FAILED_TO_COMPILE_PROMPT), util.Arrays.asList(SbtConsoleRunner.PROMPT_AFTER_EMPTY_ACTION))
     } finally output.close()
-    val error: Boolean = output.endOfOutputContains(SbtRunner.ERROR_RUNNING_ACTION_PREFIX) || output.endOfOutputContains(SbtRunner.ERROR_SBT_010_PREFIX)
-    SbtRunner.LOG.debug("completed: " + action + ", error: " + error)
+    val error: Boolean = output.endOfOutputContains(SbtConsoleRunner.ERROR_RUNNING_ACTION_PREFIX) || output.endOfOutputContains(SbtConsoleRunner.ERROR_SBT_010_PREFIX)
+    SbtConsoleRunner.LOG.debug("completed: " + action + ", error: " + error)
     !error
   }
 }
