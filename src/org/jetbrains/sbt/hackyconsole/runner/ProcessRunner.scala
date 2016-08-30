@@ -1,4 +1,4 @@
-package org.jetbrains.sbt.console.runner
+package org.jetbrains.sbt.hackyconsole.runner
 
 import java.io._
 
