@@ -7,6 +7,7 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.testFramework.LightVirtualFile
 
 /**
   * Created by jast on 2016-5-29.
@@ -30,8 +31,11 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
   override def createProcessHandler(process: Process): OSProcessHandler =
     new OSProcessHandler(process, myCommandLine.getCommandLineString)
 
-  override def createConsoleView(): LanguageConsoleView =
-    new LanguageConsoleImpl(project, consoleTitle, SbtConsoleLanguage)
+  override def createConsoleView(): LanguageConsoleView = {
+    val file = new LightVirtualFile("sbtConsole.sbtc", SbtConsoleFileType, "")
+    val helper = new LanguageConsoleImpl.Helper(project, file)
+    new LanguageConsoleImpl(helper)
+  }
 
   override def createProcess(): Process =
     myCommandLine.createProcess

@@ -17,14 +17,15 @@ class SbtConsoleComponent(var project: Project)
     val manager = StartupManager.getInstance(myProject)
     val title = SbtConsoleComponent.SBT_CONSOLE_TOOL_WINDOW_ID
 
-    manager.registerPostStartupActivity(new DumbAwareRunnable() {
-      def run() {
-        val cr = new SbtConsoleRunner(project, title, project.getBaseDir.getCanonicalPath)
-        cr.createConsoleView()
-        cr.createProcess()
-        consoleRunner = Option(cr)
-      }
-    })
+    manager.registerPostStartupActivity(
+      new DumbAwareRunnable() {
+        def run() {
+          val cr = new SbtConsoleRunner(project, title, project.getBaseDir.getCanonicalPath)
+          cr.createConsoleView()
+          cr.createProcess()
+          consoleRunner = Option(cr)
+        }
+      })
   }
 
   override def disposeComponent() {
