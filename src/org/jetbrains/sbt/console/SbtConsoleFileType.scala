@@ -5,7 +5,9 @@ import javax.swing.Icon
 import com.intellij.openapi.fileTypes.LanguageFileType
 import org.jetbrains.sbt.Sbt
 
-
+/**
+  * Dummy file type required by the sbt console LightVirtualFile
+  */
 object SbtConsoleFileType extends LanguageFileType(SbtConsoleLanguage) {
 
   override def getDefaultExtension: String = "sbtc"

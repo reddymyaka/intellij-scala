@@ -7,7 +7,6 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.testFramework.LightVirtualFile
 
 /**
   * Created by jast on 2016-5-29.
@@ -27,19 +26,16 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
 
   private val myCommandLine: GeneralCommandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, false)
 
-
   override def createProcessHandler(process: Process): OSProcessHandler =
     new OSProcessHandler(process, myCommandLine.getCommandLineString)
 
-  override def createConsoleView(): LanguageConsoleView = {
-    val file = new LightVirtualFile("sbtConsole.sbtc", SbtConsoleFileType, "")
-    val helper = new LanguageConsoleImpl.Helper(project, file)
-    new LanguageConsoleImpl(helper)
-  }
+  // this creates a LightVirtualFile in the background which is the basis for the console window
+  // it's important that there is a FileTypeFactory for this language, so that the file gets handled correctly
+  override def createConsoleView(): LanguageConsoleView =
+    new LanguageConsoleImpl(project, "sbtConsole.sbtc", SbtConsoleLanguage)
 
   override def createProcess(): Process =
     myCommandLine.createProcess
-
 
   override def createExecuteActionHandler(): ProcessBackedConsoleExecuteActionHandler = {
     val handler: ProcessBackedConsoleExecuteActionHandler =
