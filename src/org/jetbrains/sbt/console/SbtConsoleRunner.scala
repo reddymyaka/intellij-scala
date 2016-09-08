@@ -7,6 +7,7 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
+import org.jetbrains.sbt.project.structure.SbtRunner
 
 /**
   * Created by jast on 2016-5-29.
@@ -19,10 +20,14 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
   val sdkType: SdkTypeId = sdk.getSdkType
   assert(sdkType.isInstanceOf[JavaSdkType])
   val exePath: String = sdkType.asInstanceOf[JavaSdkType].getVMExecutablePath(sdk)
+  val launcherJar = SbtRunner.getDefaultLauncher
 
   val javaParameters: JavaParameters = new JavaParameters
   javaParameters.setJdk(sdk)
   javaParameters.configureByProject(project, 1, sdk)
+  javaParameters.setWorkingDirectory(workingDir)
+  javaParameters.setJarPath(launcherJar.getCanonicalPath)
+  javaParameters.getVMParametersList.addAll("-XX:MaxPermSize=128M", "-Xmx2G")
 
   private val myCommandLine: GeneralCommandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, false)
 
