@@ -1,6 +1,5 @@
 package org.jetbrains.sbt.console
 
-import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.{DumbAware, DumbAwareRunnable, Project}
@@ -12,7 +11,6 @@ import com.intellij.openapi.startup.StartupManager
 class SbtConsoleComponent(var project: Project)
   extends AbstractProjectComponent(project) with DumbAware {
 
-  @volatile private var consoleView: Option[LanguageConsoleView] = None
 
   override def projectOpened() {
     val manager = StartupManager.getInstance(myProject)
@@ -22,17 +20,11 @@ class SbtConsoleComponent(var project: Project)
       new DumbAwareRunnable() {
         def run() {
           val cr = new SbtConsoleRunner(project, title, project.getBaseDir.getCanonicalPath)
-          val cv = cr.createConsoleView()
-          consoleView = Option(cv)
-
           cr.initAndRun()
         }
       })
   }
 
-  override def disposeComponent(): Unit = {
-    consoleView.foreach(_.dispose())
-  }
 }
 
 

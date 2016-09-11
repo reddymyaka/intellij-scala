@@ -20,24 +20,28 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
   val sdkType: SdkTypeId = sdk.getSdkType
   assert(sdkType.isInstanceOf[JavaSdkType])
   val exePath: String = sdkType.asInstanceOf[JavaSdkType].getVMExecutablePath(sdk)
+  // TODO get this from configuration
   val launcherJar = SbtRunner.getDefaultLauncher
 
-  val javaParameters: JavaParameters = new JavaParameters
+  private val javaParameters: JavaParameters = new JavaParameters
   javaParameters.setJdk(sdk)
   javaParameters.configureByProject(project, 1, sdk)
   javaParameters.setWorkingDirectory(workingDir)
   javaParameters.setJarPath(launcherJar.getCanonicalPath)
-  javaParameters.getVMParametersList.addAll("-XX:MaxPermSize=128M", "-Xmx2G")
+  // TODO get from configuration
+  javaParameters.getVMParametersList.addAll("-XX:MaxPermSize=128M", "-Xmx2G", "-Dsbt.log.noformat=true")
 
   private val myCommandLine: GeneralCommandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, false)
 
   override def createProcessHandler(process: Process): OSProcessHandler =
     new OSProcessHandler(process, myCommandLine.getCommandLineString)
 
-  // this creates a LightVirtualFile in the background which is the basis for the console window
-  // it's important that there is a FileTypeFactory for this language, so that the file gets handled correctly
   override def createConsoleView(): LanguageConsoleView =
-    new LanguageConsoleImpl(project, "sbtConsole.sbtc", SbtConsoleLanguage)
+//    new LanguageConsoleImpl(project, "sbtConsole", SbtConsoleLanguage)
+    new LanguageConsoleBuilder()
+        .oneLineInput()
+        .processInputStateKey("enter")
+        .build(project, SbtConsoleLanguage)
 
   override def createProcess(): Process =
     myCommandLine.createProcess
