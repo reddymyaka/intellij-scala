@@ -36,12 +36,20 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
   override def createProcessHandler(process: Process): OSProcessHandler =
     new OSProcessHandler(process, myCommandLine.getCommandLineString)
 
-  override def createConsoleView(): LanguageConsoleView =
-//    new LanguageConsoleImpl(project, "sbtConsole", SbtConsoleLanguage)
-    new LanguageConsoleBuilder()
-        .oneLineInput()
-        .processInputStateKey("enter")
-        .build(project, SbtConsoleLanguage)
+  override def createConsoleView(): LanguageConsoleView = {
+    val cv = new LanguageConsoleImpl(project, "sbtConsole", SbtConsoleLanguage)
+    cv.getConsoleEditor.setOneLineMode(true)
+//    cv.registerKeyboardAction(???, KeyStroke.getKeyStroke('\t'),???)
+    cv
+  }
+
+//    LanguageConsoleBuilder.registerExecuteAction()
+//
+//      new LanguageConsoleBuilder()
+//          .oneLineInput()
+//          .initActions()
+//          .build(project, SbtConsoleLanguage)
+//  }
 
   override def createProcess(): Process =
     myCommandLine.createProcess
