@@ -1,10 +1,16 @@
 package org.jetbrains.sbt.console
 
+import java.awt.event.KeyEvent
+import java.util
+
+import com.intellij.execution.Executor
 import com.intellij.execution.configurations.{GeneralCommandLine, JavaParameters}
 import com.intellij.execution.console._
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
-import com.intellij.openapi.project.Project
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, DefaultActionGroup}
+import com.intellij.openapi.project.{DumbAwareAction, Project}
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.sbt.project.structure.SbtRunner
@@ -13,7 +19,7 @@ import org.jetbrains.sbt.project.structure.SbtRunner
   * Created by jast on 2016-5-29.
   */
 class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: String)
-  extends AbstractConsoleRunnerWithHistory[LanguageConsoleView](project, consoleTitle, workingDir) {
+  extends AbstractConsoleRunnerWithHistory[LanguageConsoleImpl](project, consoleTitle, workingDir) {
 
   val sdk: Sdk = ProjectRootManager.getInstance(project).getProjectSdk
   assert(sdk != null)
@@ -32,37 +38,54 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
   javaParameters.getVMParametersList.addAll("-XX:MaxPermSize=128M", "-Xmx2G", "-Dsbt.log.noformat=true")
 
   private val myCommandLine: GeneralCommandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, false)
+  private val myConsoleView: LanguageConsoleImpl = {
+    val cv = new LanguageConsoleImpl(project, "sbtConsole", SbtConsoleLanguage)
+    cv.getConsoleEditor.setOneLineMode(true)
+    cv
+  }
+
+  // lazy so that getProcessHandler will return something initialized when this is first accessed
+  private lazy val myConsoleExecuteActionHandler: SbtConsoleExecuteActionHandler =
+    new SbtConsoleExecuteActionHandler(getProcessHandler)
+
 
   override def createProcessHandler(process: Process): OSProcessHandler =
     new OSProcessHandler(process, myCommandLine.getCommandLineString)
 
-  override def createConsoleView(): LanguageConsoleView = {
-    val cv = new LanguageConsoleImpl(project, "sbtConsole", SbtConsoleLanguage)
-    cv.getConsoleEditor.setOneLineMode(true)
-//    cv.registerKeyboardAction(???, KeyStroke.getKeyStroke('\t'),???)
-    cv
-  }
+  override def createConsoleView(): LanguageConsoleImpl = myConsoleView
 
-//    LanguageConsoleBuilder.registerExecuteAction()
-//
-//      new LanguageConsoleBuilder()
-//          .oneLineInput()
-//          .initActions()
-//          .build(project, SbtConsoleLanguage)
-//  }
+  override def createProcess(): Process = myCommandLine.createProcess
 
-  override def createProcess(): Process =
-    myCommandLine.createProcess
-
-  override def createExecuteActionHandler(): ProcessBackedConsoleExecuteActionHandler = {
-    val handler: ProcessBackedConsoleExecuteActionHandler =
-      new ProcessBackedConsoleExecuteActionHandler(getProcessHandler, false) {
-        override def getEmptyExecuteAction: String = "sbt.console.execute"
-      }
+  override def createExecuteActionHandler(): SbtConsoleExecuteActionHandler = {
     val historyController = new ConsoleHistoryController(SbtConsoleRootType, null, getConsoleView)
     historyController.install()
 
-    handler
+    myConsoleExecuteActionHandler
+  }
+
+
+  override def fillToolBarActions(toolbarActions: DefaultActionGroup,
+                                  defaultExecutor: Executor,
+                                  contentDescriptor: RunContentDescriptor): util.List[AnAction] = {
+
+    val actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor)
+    val tabAction = createTabAction()
+    actions.add(tabAction)
+    actions
+  }
+
+  def createTabAction(): AnAction = {
+    val upAction = new TabAction
+    upAction.registerCustomShortcutSet(KeyEvent.VK_TAB, 0, null)
+    upAction.getTemplatePresentation.setVisible(false)
+    upAction
+  }
+
+  class TabAction extends DumbAwareAction {
+    override def actionPerformed(e: AnActionEvent): Unit = {
+      val text = getConsoleView.prepareExecuteAction(false,false,false)
+      myConsoleExecuteActionHandler.sendTab(text)
+    }
   }
 
   object SbtConsoleRootType extends ConsoleRootType("sbt.console", getConsoleTitle)
