@@ -7,8 +7,4 @@ import com.intellij.execution.process.ProcessHandler
 class SbtConsoleExecuteActionHandler(processHandler: ProcessHandler)
   extends ProcessBackedConsoleExecuteActionHandler(processHandler, true) {
 
-  override def getEmptyExecuteAction: String = "sbt.console.execute"
-
-  def sendTab(line: String): Unit =
-    sendText(line + "\t")
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.sbt.console
 
 import java.awt.event.KeyEvent
+import java.io.File
 import java.util
 
 import com.intellij.execution.Executor
@@ -27,7 +28,7 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
   assert(sdkType.isInstanceOf[JavaSdkType])
   val exePath: String = sdkType.asInstanceOf[JavaSdkType].getVMExecutablePath(sdk)
   // TODO get this from configuration
-  val launcherJar = SbtRunner.getDefaultLauncher
+  val launcherJar: File = SbtRunner.getDefaultLauncher
 
   private val javaParameters: JavaParameters = new JavaParameters
   javaParameters.setJdk(sdk)
@@ -83,8 +84,9 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
 
   class TabAction extends DumbAwareAction {
     override def actionPerformed(e: AnActionEvent): Unit = {
-      val text = getConsoleView.prepareExecuteAction(false,false,false)
-      myConsoleExecuteActionHandler.sendTab(text)
+      val text = getConsoleView.getEditorDocument.getText
+      val history = getConsoleView.getHistoryViewer
+      // TODO call code completion (ctrl+space by default)
     }
   }
 

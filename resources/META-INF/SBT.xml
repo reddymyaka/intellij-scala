@@ -97,12 +97,4 @@
         <scalaFileFactory implementation="org.jetbrains.sbt.language.SbtFileFactory" />
     </extensions>
 
-    <actions>
-        <action id="sbt.console.execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
-                text="sbt console"
-                description="Run sbt console">
-            <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
-        </action>
-    </actions>
-
 </idea-plugin>
