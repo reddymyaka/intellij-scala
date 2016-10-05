@@ -17,7 +17,7 @@
             <implementation-class>org.jetbrains.sbt.resolvers.SbtResolversManager</implementation-class>
         </component>
         <component>
-            <implementation-class>org.jetbrains.sbt.console.SbtConsoleComponent</implementation-class>
+            <implementation-class>org.jetbrains.sbt.shell.SbtShellComponent</implementation-class>
             <loadForDefaultProject/>
         </component>
     </project-components>
@@ -34,10 +34,11 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <fileTypeFactory implementation="org.jetbrains.sbt.language.SbtFileTypeFactory"/>
-        <fileTypeFactory implementation="org.jetbrains.sbt.console.SbtConsoleFileTypeFactory"/>
+        <fileTypeFactory implementation="org.jetbrains.sbt.shell.SbtShellFileTypeFactory"/>
         <annotator language="Scala" implementationClass="org.jetbrains.sbt.annotator.SbtAnnotator" />
         <annotator language="Scala" implementationClass="org.jetbrains.sbt.annotator.SbtDependencyAnnotator"/>
         <lang.documentationProvider language="Scala" implementationClass="org.jetbrains.sbt.editor.documentationProvider.SbtDocumentationProvider" order="first"/>
+        <lang.parserDefinition language="sbtConsole" implementationClass="org.jetbrains.sbt.shell.SbtShellParserDefinition" />
 
         <externalSystemManager implementation="org.jetbrains.sbt.project.SbtExternalSystemManager"/>
         <externalProjectDataService implementation="org.jetbrains.sbt.project.data.service.ModuleExtDataService"/>
@@ -77,6 +78,8 @@
             order="first, before liveTemplates" id="sbtCompletionContributor"/>
         <completion.contributor language="Scala" implementationClass="org.jetbrains.sbt.language.completion.SbtMavenDependencyCompletionContributor"
                                 order="first, before sbtCompletionContributor" />
+        <completion.contributor language="sbtConsole" implementationClass="org.jetbrains.sbt.shell.SbtShellCompletionContributor"
+                                order="first"/>
         <weigher key="completion" implementationClass="org.jetbrains.sbt.language.completion.SbtDefinitionWeigher"
                  id="scalaSbtDefinitionWeigher" order="before scalaContainingClassWeigher, before scalaMethodCompletionWeigher, before scalaClassesCompletionWeigher"/>
 

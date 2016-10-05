@@ -12,6 +12,7 @@ object Common {
       unmanagedSourceDirectories in Compile += baseDirectory.value / "src",
       unmanagedSourceDirectories in Test += baseDirectory.value / "test",
       unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
+      managedSourceDirectories in Compile += baseDirectory.value / "gen",
       libraryDependencies += Dependencies.junitInterface
     )
 

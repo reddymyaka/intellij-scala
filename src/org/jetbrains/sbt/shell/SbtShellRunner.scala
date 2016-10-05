@@ -1,4 +1,4 @@
-package org.jetbrains.sbt.console
+package org.jetbrains.sbt.shell
 
 import java.awt.event.KeyEvent
 import java.io.File
@@ -19,7 +19,7 @@ import org.jetbrains.sbt.project.structure.SbtRunner
 /**
   * Created by jast on 2016-5-29.
   */
-class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: String)
+class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
   extends AbstractConsoleRunnerWithHistory[LanguageConsoleImpl](project, consoleTitle, workingDir) {
 
   val sdk: Sdk = ProjectRootManager.getInstance(project).getProjectSdk
@@ -40,14 +40,14 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
 
   private val myCommandLine: GeneralCommandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, false)
   private val myConsoleView: LanguageConsoleImpl = {
-    val cv = new LanguageConsoleImpl(project, "sbtConsole", SbtConsoleLanguage)
+    val cv = new LanguageConsoleImpl(project, SbtShellFileType.getName, SbtShellLanguage)
     cv.getConsoleEditor.setOneLineMode(true)
     cv
   }
 
   // lazy so that getProcessHandler will return something initialized when this is first accessed
-  private lazy val myConsoleExecuteActionHandler: SbtConsoleExecuteActionHandler =
-    new SbtConsoleExecuteActionHandler(getProcessHandler)
+  private lazy val myConsoleExecuteActionHandler: SbtShellExecuteActionHandler =
+    new SbtShellExecuteActionHandler(getProcessHandler)
 
 
   override def createProcessHandler(process: Process): OSProcessHandler =
@@ -57,7 +57,7 @@ class SbtConsoleRunner(project: Project, consoleTitle: String, workingDir: Strin
 
   override def createProcess(): Process = myCommandLine.createProcess
 
-  override def createExecuteActionHandler(): SbtConsoleExecuteActionHandler = {
+  override def createExecuteActionHandler(): SbtShellExecuteActionHandler = {
     val historyController = new ConsoleHistoryController(SbtConsoleRootType, null, getConsoleView)
     historyController.install()
 

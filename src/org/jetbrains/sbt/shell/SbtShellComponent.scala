@@ -1,4 +1,4 @@
-package org.jetbrains.sbt.console
+package org.jetbrains.sbt.shell
 
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.diagnostic.Logger
@@ -8,18 +8,18 @@ import com.intellij.openapi.startup.StartupManager
 /**
   * Created by jast on 2016-5-30.
   */
-class SbtConsoleComponent(var project: Project)
+class SbtShellComponent(var project: Project)
   extends AbstractProjectComponent(project) with DumbAware {
 
 
   override def projectOpened() {
     val manager = StartupManager.getInstance(myProject)
-    val title = SbtConsoleComponent.SBT_CONSOLE_TOOL_WINDOW_ID
+    val title = SbtShellComponent.SBT_SHELL_TOOL_WINDOW_ID
 
     manager.registerPostStartupActivity(
       new DumbAwareRunnable() {
         def run() {
-          val cr = new SbtConsoleRunner(project, title, project.getBaseDir.getCanonicalPath)
+          val cr = new SbtShellRunner(project, title, project.getBaseDir.getCanonicalPath)
           cr.initAndRun()
         }
       })
@@ -28,10 +28,10 @@ class SbtConsoleComponent(var project: Project)
 }
 
 
-object SbtConsoleComponent {
-  private val logger: Logger = Logger.getInstance(classOf[SbtConsoleComponent].getName)
-  private val SBT_CONSOLE_TOOL_WINDOW_ID: String = "SBT Console"
+object SbtShellComponent {
+  private val logger: Logger = Logger.getInstance(classOf[SbtShellComponent].getName)
+  private val SBT_SHELL_TOOL_WINDOW_ID: String = "SBT Shell"
 
-  def getInstance(project: Project): SbtConsoleComponent = project.getComponent(classOf[SbtConsoleComponent])
+  def getInstance(project: Project): SbtShellComponent = project.getComponent(classOf[SbtShellComponent])
 
 }
