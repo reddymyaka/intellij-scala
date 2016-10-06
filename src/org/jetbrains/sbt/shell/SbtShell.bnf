@@ -1,6 +1,5 @@
 {
   parserClass = "org.jetbrains.sbt.shell.grammar.SbtShellParser"
-  parserUtilClass="org.jetbrains.sbt.shell.grammar.SbtShellParserUtil"
   extends = "com.intellij.extapi.psi.ASTWrapperPsiElement"
 
   psiClassPrefix = "SbtShell"

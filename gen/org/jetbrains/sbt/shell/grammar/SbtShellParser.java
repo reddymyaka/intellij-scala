@@ -4,7 +4,7 @@ package org.jetbrains.sbt.shell.grammar;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import static org.jetbrains.sbt.shell.grammar.SbtShellTypes.*;
-import static org.jetbrains.sbt.shell.grammar.SbtShellParserUtil.*;
+import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
