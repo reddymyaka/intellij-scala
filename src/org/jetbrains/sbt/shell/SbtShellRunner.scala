@@ -4,14 +4,15 @@ import java.awt.event.KeyEvent
 import java.io.File
 import java.util
 
-import com.intellij.execution.Executor
+import com.intellij.execution.{ExecutionBundle, ExecutionManager, Executor}
 import com.intellij.execution.configurations.{GeneralCommandLine, JavaParameters}
 import com.intellij.execution.console._
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, DefaultActionGroup}
-import com.intellij.openapi.project.{DumbAwareAction, Project}
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem._
+import com.intellij.openapi.project.{DumbAware, DumbAwareAction, Project}
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.sbt.project.structure.SbtRunner
@@ -49,16 +50,19 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
   private lazy val myConsoleExecuteActionHandler: SbtShellExecuteActionHandler =
     new SbtShellExecuteActionHandler(getProcessHandler)
 
+  private lazy val myProcessHandler = new OSProcessHandler(myCommandLine)
 
-  override def createProcessHandler(process: Process): OSProcessHandler =
-    new OSProcessHandler(process, myCommandLine.getCommandLineString)
+  override def createProcessHandler(process: Process): OSProcessHandler = myProcessHandler
 
   override def createConsoleView(): LanguageConsoleImpl = myConsoleView
 
-  override def createProcess(): Process = myCommandLine.createProcess
+  override def createProcess(): Process = myProcessHandler.getProcess
+
+
+  object SbtShellRootType extends ConsoleRootType("sbt.shell", getConsoleTitle)
 
   override def createExecuteActionHandler(): SbtShellExecuteActionHandler = {
-    val historyController = new ConsoleHistoryController(SbtConsoleRootType, null, getConsoleView)
+    val historyController = new ConsoleHistoryController(SbtShellRootType, null, getConsoleView)
     historyController.install()
 
     myConsoleExecuteActionHandler
@@ -70,25 +74,44 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
                                   contentDescriptor: RunContentDescriptor): util.List[AnAction] = {
 
     val actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor)
-    val tabAction = createTabAction()
+    val tabAction = createAutoCompleteAction()
+    val restartAction = new RestartAction(myProcessHandler)
+
     actions.add(tabAction)
+    actions.add(restartAction)
+
     actions
   }
 
-  def createTabAction(): AnAction = {
-    val upAction = new TabAction
-    upAction.registerCustomShortcutSet(KeyEvent.VK_TAB, 0, null)
-    upAction.getTemplatePresentation.setVisible(false)
-    upAction
+
+  def createAutoCompleteAction(): AnAction = {
+    val action = new AutoCompleteAction
+    action.registerCustomShortcutSet(KeyEvent.VK_TAB, 0, null)
+    action.getTemplatePresentation.setVisible(false)
+    action
   }
 
-  class TabAction extends DumbAwareAction {
-    override def actionPerformed(e: AnActionEvent): Unit = {
-      val text = getConsoleView.getEditorDocument.getText
-      val history = getConsoleView.getHistoryViewer
-      // TODO call code completion (ctrl+space by default)
-    }
+}
+
+class AutoCompleteAction extends DumbAwareAction {
+  override def actionPerformed(e: AnActionEvent): Unit = {
+    // TODO call code completion (ctrl+space by default)
+  }
+}
+
+
+class RestartAction(myProcessHandler: OSProcessHandler) extends DumbAwareAction {
+  copyFrom(ActionManager.getInstance.getAction(IdeActions.ACTION_RERUN))
+
+  val templatePresentation: Presentation = getTemplatePresentation
+  templatePresentation.setIcon(AllIcons.Actions.Restart)
+  templatePresentation.setText("Restart SBT Shell") // TODO language-bundle
+  templatePresentation.setDescription(null)
+
+  def actionPerformed(e: AnActionEvent): Unit = {
+    myProcessHandler.destroyProcess()
+//    myProcessHandler.
   }
 
-  object SbtConsoleRootType extends ConsoleRootType("sbt.console", getConsoleTitle)
+  override def update(e: AnActionEvent) {}
 }
