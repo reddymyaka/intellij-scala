@@ -16,6 +16,7 @@ import com.intellij.openapi.project.{DumbAwareAction, DumbAwareRunnable, Project
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.sbt.project.structure.SbtRunner
+import scala.collection.JavaConverters._
 
 /**
   * Created by jast on 2016-5-29.
@@ -73,16 +74,18 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
                                   defaultExecutor: Executor,
                                   contentDescriptor: RunContentDescriptor): util.List[AnAction] = {
 
-    val actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor)
+    val myToolbarActions = List(
+      new RestartAction(this, defaultExecutor, contentDescriptor),
+      createCloseAction(defaultExecutor, contentDescriptor)
+    )
 
-    val tabAction = createAutoCompleteAction()
-    actions.add(tabAction)
+    val allActions = List(
+      createAutoCompleteAction(),
+      createConsoleExecAction(myConsoleExecuteActionHandler)
+    ) ++ myToolbarActions
 
-    val restartAction = new RestartAction(this, defaultExecutor, contentDescriptor)
-    actions.add(restartAction)
-    toolbarActions.add(restartAction)
-
-    actions
+    toolbarActions.addAll(myToolbarActions.asJava)
+    allActions.asJava
   }
 
 
@@ -98,8 +101,11 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
 
 }
 
-class SbtShellRunnable(project: Project, title: String) extends DumbAwareRunnable() {
-  def run() {
+object SbtShellRunner {
+
+  /** Initialize and run an sbt shell window. */
+  def run(project: Project): Unit = {
+    val title = "SBT Shell"
     val cr = new SbtShellRunner(project, title, project.getBaseDir.getCanonicalPath)
     cr.initAndRun()
   }
