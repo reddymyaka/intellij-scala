@@ -1494,10 +1494,15 @@
           <add-to-group group-id="IntroduceActionsGroup"/>
         </action>
         <action id="Scala.MacroExpand"
-            class="org.jetbrains.plugins.scala.lang.macros.expansion.MacroExpandAction"
-            description="Expand macro application under cursor">
+                class="org.jetbrains.plugins.scala.lang.macros.expansion.MacroExpandAction"
+                description="Expand macro application under cursor">
             <keyboard-shortcut first-keystroke="ctrl alt shift Z" keymap="$default"/>
         </action>
-      </actions>
+        <action id="Scala.Sbt.StartShell"
+                class="org.jetbrains.sbt.shell.SbtShellStartAction"
+                description="Start SBT shell">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Scala.RunConsole" />
+        </action>
+    </actions>
 
 </idea-plugin>
