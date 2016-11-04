@@ -4,15 +4,15 @@ import java.awt.event.KeyEvent
 import java.io.File
 import java.util
 
-import com.intellij.execution.{ExecutionBundle, ExecutionManager, Executor}
 import com.intellij.execution.configurations.{GeneralCommandLine, JavaParameters}
 import com.intellij.execution.console._
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.{ExecutionManager, Executor}
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem._
-import com.intellij.openapi.project.{DumbAware, DumbAwareAction, DumbAwareRunnable, Project}
+import com.intellij.openapi.project.{DumbAwareAction, DumbAwareRunnable, Project}
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.sbt.project.structure.SbtRunner
@@ -78,7 +78,7 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
     val tabAction = createAutoCompleteAction()
     actions.add(tabAction)
 
-    val restartAction = new RestartAction(myProcessHandler)
+    val restartAction = new RestartAction(this, defaultExecutor, contentDescriptor)
     actions.add(restartAction)
     toolbarActions.add(restartAction)
 
@@ -92,6 +92,9 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
     action.getTemplatePresentation.setVisible(false)
     action
   }
+
+  /** A new instance of the runner with the same constructor params as this one, but fresh state. */
+  def respawn: SbtShellRunner = new SbtShellRunner(project, consoleTitle, workingDir)
 
 }
 
@@ -109,7 +112,7 @@ class AutoCompleteAction extends DumbAwareAction {
 }
 
 
-class RestartAction(runner: SbtShellRunner) extends DumbAwareAction {
+class RestartAction(runner: SbtShellRunner, executor: Executor, contentDescriptor: RunContentDescriptor) extends DumbAwareAction {
   copyFrom(ActionManager.getInstance.getAction(IdeActions.ACTION_RERUN))
 
   val templatePresentation: Presentation = getTemplatePresentation
@@ -118,9 +121,13 @@ class RestartAction(runner: SbtShellRunner) extends DumbAwareAction {
   templatePresentation.setDescription(null)
 
   def actionPerformed(e: AnActionEvent): Unit = {
-    runner.getProcessHandler.destroyProcess()
     ExecutionManager.getInstance(runner.getProject)
-//    myProcessHandler.
+      .getContentManager
+      .removeRunContent(executor, contentDescriptor)
+
+    runner.getProcessHandler.destroyProcess()
+
+    runner.respawn.initAndRun()
   }
 
   override def update(e: AnActionEvent) {}

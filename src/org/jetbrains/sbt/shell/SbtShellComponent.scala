@@ -19,7 +19,6 @@ class SbtShellComponent(var project: Project)
     val title = SbtShellComponent.SBT_SHELL_TOOL_WINDOW_ID
 
     manager.registerPostStartupActivity(new SbtShellRunnable(project, title))
-    ExecutionManager
   }
 
 }
