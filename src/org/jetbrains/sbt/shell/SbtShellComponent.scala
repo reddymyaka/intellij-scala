@@ -1,5 +1,6 @@
 package org.jetbrains.sbt.shell
 
+import com.intellij.execution.ExecutionManager
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.{DumbAware, DumbAwareRunnable, Project}
@@ -12,17 +13,13 @@ class SbtShellComponent(var project: Project)
   extends AbstractProjectComponent(project) with DumbAware {
 
 
+  // TODO running this on project open is maybe not optimally elegant
   override def projectOpened() {
     val manager = StartupManager.getInstance(myProject)
     val title = SbtShellComponent.SBT_SHELL_TOOL_WINDOW_ID
 
-    manager.registerPostStartupActivity(
-      new DumbAwareRunnable() {
-        def run() {
-          val cr = new SbtShellRunner(project, title, project.getBaseDir.getCanonicalPath)
-          cr.initAndRun()
-        }
-      })
+    manager.registerPostStartupActivity(new SbtShellRunnable(project, title))
+    ExecutionManager
   }
 
 }

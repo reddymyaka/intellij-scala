@@ -12,7 +12,7 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem._
-import com.intellij.openapi.project.{DumbAware, DumbAwareAction, Project}
+import com.intellij.openapi.project.{DumbAware, DumbAwareAction, DumbAwareRunnable, Project}
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.sbt.project.structure.SbtRunner
@@ -74,11 +74,13 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
                                   contentDescriptor: RunContentDescriptor): util.List[AnAction] = {
 
     val actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor)
-    val tabAction = createAutoCompleteAction()
-    val restartAction = new RestartAction(myProcessHandler)
 
+    val tabAction = createAutoCompleteAction()
     actions.add(tabAction)
+
+    val restartAction = new RestartAction(myProcessHandler)
     actions.add(restartAction)
+    toolbarActions.add(restartAction)
 
     actions
   }
@@ -93,6 +95,13 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
 
 }
 
+class SbtShellRunnable(project: Project, title: String) extends DumbAwareRunnable() {
+  def run() {
+    val cr = new SbtShellRunner(project, title, project.getBaseDir.getCanonicalPath)
+    cr.initAndRun()
+  }
+}
+
 class AutoCompleteAction extends DumbAwareAction {
   override def actionPerformed(e: AnActionEvent): Unit = {
     // TODO call code completion (ctrl+space by default)
@@ -100,7 +109,7 @@ class AutoCompleteAction extends DumbAwareAction {
 }
 
 
-class RestartAction(myProcessHandler: OSProcessHandler) extends DumbAwareAction {
+class RestartAction(runner: SbtShellRunner) extends DumbAwareAction {
   copyFrom(ActionManager.getInstance.getAction(IdeActions.ACTION_RERUN))
 
   val templatePresentation: Presentation = getTemplatePresentation
@@ -109,7 +118,8 @@ class RestartAction(myProcessHandler: OSProcessHandler) extends DumbAwareAction 
   templatePresentation.setDescription(null)
 
   def actionPerformed(e: AnActionEvent): Unit = {
-    myProcessHandler.destroyProcess()
+    runner.getProcessHandler.destroyProcess()
+    ExecutionManager.getInstance(runner.getProject)
 //    myProcessHandler.
   }
 
