@@ -1,7 +1,6 @@
 package org.jetbrains.sbt.shell
 
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, PlatformDataKeys}
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 
 /**
   * Created by jast on 2016-11-04.

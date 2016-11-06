@@ -6,16 +6,17 @@ import java.util
 
 import com.intellij.execution.configurations.{GeneralCommandLine, JavaParameters}
 import com.intellij.execution.console._
-import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.{OSProcessHandler, ProcessHandler}
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.{ExecutionManager, Executor}
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem._
-import com.intellij.openapi.project.{DumbAwareAction, DumbAwareRunnable, Project}
+import com.intellij.openapi.project.{DumbAwareAction, Project}
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.sbt.project.structure.SbtRunner
+
 import scala.collection.JavaConverters._
 
 /**
@@ -137,4 +138,8 @@ class RestartAction(runner: SbtShellRunner, executor: Executor, contentDescripto
   }
 
   override def update(e: AnActionEvent) {}
+}
+
+class SbtShellExecuteActionHandler(processHandler: ProcessHandler)
+  extends ProcessBackedConsoleExecuteActionHandler(processHandler, true) {
 }
