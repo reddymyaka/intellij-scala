@@ -9,6 +9,7 @@ import com.intellij.execution.console._
 import com.intellij.execution.process.{OSProcessHandler, ProcessHandler}
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.actions.CloseAction
 import com.intellij.execution.{ExecutionManager, Executor}
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem._
@@ -77,7 +78,8 @@ class SbtShellRunner(project: Project, consoleTitle: String, workingDir: String)
 
     val myToolbarActions = List(
       new RestartAction(this, defaultExecutor, contentDescriptor),
-      createCloseAction(defaultExecutor, contentDescriptor)
+      new CloseAction(defaultExecutor, contentDescriptor, project),
+      new ExecuteTaskAction("compile")
     )
 
     val allActions = List(
@@ -124,7 +126,7 @@ class RestartAction(runner: SbtShellRunner, executor: Executor, contentDescripto
 
   val templatePresentation: Presentation = getTemplatePresentation
   templatePresentation.setIcon(AllIcons.Actions.Restart)
-  templatePresentation.setText("Restart SBT Shell") // TODO language-bundle
+  templatePresentation.setText("Restart SBT Shell") // TODO i18n / language-bundle
   templatePresentation.setDescription(null)
 
   def actionPerformed(e: AnActionEvent): Unit = {
@@ -142,4 +144,14 @@ class RestartAction(runner: SbtShellRunner, executor: Executor, contentDescripto
 
 class SbtShellExecuteActionHandler(processHandler: ProcessHandler)
   extends ProcessBackedConsoleExecuteActionHandler(processHandler, true) {
+}
+
+class ExecuteTaskAction(task: String) extends DumbAwareAction {
+
+  getTemplatePresentation.setIcon(AllIcons.Actions.Compile)
+  getTemplatePresentation.setText(s"Execute $task")
+
+  override def actionPerformed(e: AnActionEvent): Unit = {
+    new SbtShellCommunication(e.getProject).task(task)
+  }
 }
