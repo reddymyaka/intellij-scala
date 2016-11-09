@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
 import org.jetbrains.plugins.scala.lang.psi.types.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypingContext
-import org.jetbrains.plugins.scala.lang.psi.{ScalaPsiElement, api => p, types => ptype}
+import org.jetbrains.plugins.scala.lang.psi.{ScalaPsiElement, ScalaPsiUtil, api => p, types => ptype}
 
 import scala.collection.immutable.Seq
 import scala.language.postfixOps
@@ -101,21 +101,33 @@ trait TreeAdapter {
     m.Decl.Val(convertMods(t), Seq(t.getIdList.fieldIds map { it => m.Pat.Var.Term(toTermName(it)) }: _*), toType(t.typeElement.get))
   }
 
-  def toTrait(t: ScTrait) = m.Defn.Trait(
-    convertMods(t),
-    toTypeName(t),
-    Seq(t.typeParameters map toTypeParams:_*),
-    m.Ctor.Primary(Nil, m.Ctor.Ref.Name("this"), Nil),
-    template(t.extendsBlock)
-  )
+  def toTrait(t: ScTrait) = {
+    val defn = m.Defn.Trait(
+      convertMods(t),
+      toTypeName(t),
+      Seq(t.typeParameters map toTypeParams: _*),
+      m.Ctor.Primary(Nil, m.Ctor.Ref.Name("this"), Nil),
+      template(t.extendsBlock)
+    )
+    ScalaPsiUtil.getBaseCompanionModule(t) match {
+      case Some(obj: ScObject) => m.Term.Block(Seq(defn, toObject(obj)))
+      case _      => defn
+    }
+  }
 
-  def toClass(c: ScClass) = m.Defn.Class(
-    convertMods(c),
-    toTypeName(c),
-    Seq(c.typeParameters map toTypeParams:_*),
-    ctor(c.constructor),
-    template(c.extendsBlock)
-  )
+  def toClass(c: ScClass) = {
+    val defn = m.Defn.Class(
+      convertMods(c),
+      toTypeName(c),
+      Seq(c.typeParameters map toTypeParams: _*),
+      ctor(c.constructor),
+      template(c.extendsBlock)
+    )
+    ScalaPsiUtil.getBaseCompanionModule(c) match {
+      case Some(obj: ScObject) => m.Term.Block(Seq(defn, toObject(obj)))
+      case _      => defn
+    }
+  }
 
   def toClass(c: PsiClass) = m.Defn.Class(
     convertMods(c.getModifierList),
@@ -183,7 +195,8 @@ trait TreeAdapter {
     val exprs   = t.templateBody map (it => Seq(it.exprs.map(expression): _*))
     val members = t.templateBody map (it => Seq(it.members.map(ideaToMeta(_).asInstanceOf[m.Stat]): _*))
     val early   = t.earlyDefinitions map (it => Seq(it.members.map(ideaToMeta(_).asInstanceOf[m.Stat]):_*)) getOrElse Seq.empty
-    val parents = t.templateParents map (it => Seq(it.typeElements map ctorParentName :_*)) getOrElse Seq.empty
+    val parents = t.templateParents
+      .map(it => Seq(it.children.filter(_.isInstanceOf[ScConstructor]).map(x=>toCtor(x.asInstanceOf[ScConstructor])).toSeq:_*)).getOrElse(Seq.empty)
     val self    = t.selfType match {
       case Some(tpe: ptype.ScType) => m.Term.Param(Nil, m.Term.Name("self"), Some(toType(tpe)), None)
       case None => m.Term.Param(Nil, m.Name.Anonymous(), None, None)
